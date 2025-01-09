@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'io.freefair.lombok' version "8.11"
 }
 
 group = 'by.vasyabylba'
@@ -15,7 +16,20 @@ repositories {
     mavenCentral()
 }
 
+ext {
+    mapstructVersion = '1.6.3'
+}
+
 dependencies {
+
+    implementation 'org.hibernate.orm:hibernate-core:6.6.4.Final'
+
+    implementation 'org.postgresql:postgresql:42.7.4'
+
+    implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+
+
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 }
