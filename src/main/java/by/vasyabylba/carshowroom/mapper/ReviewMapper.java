@@ -1,24 +1,22 @@
 package by.vasyabylba.carshowroom.mapper;
 
-import by.vasyabylba.carshowroom.dto.ReviewRequest;
-import by.vasyabylba.carshowroom.dto.ReviewResponse;
+import by.vasyabylba.carshowroom.dto.review.ReviewRequest;
+import by.vasyabylba.carshowroom.dto.review.ReviewResponse;
 import by.vasyabylba.carshowroom.entity.Car;
 import by.vasyabylba.carshowroom.entity.Client;
 import by.vasyabylba.carshowroom.entity.Review;
 import org.mapstruct.InheritConfiguration;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
-import org.mapstruct.factory.Mappers;
 
 import java.util.UUID;
 
-@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = MappingConstants.ComponentModel.SPRING)
 public interface ReviewMapper {
-
-    ReviewMapper INSTANCE = Mappers.getMapper(ReviewMapper.class);
 
     @Mapping(target = "car", source = "carId", qualifiedByName = "carIdToCar")
     @Mapping(target = "client", source = "clientId", qualifiedByName = "clientIdToCar")

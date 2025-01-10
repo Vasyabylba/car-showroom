@@ -9,8 +9,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.NamedAttributeNode;
-import jakarta.persistence.NamedEntityGraph;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -35,12 +33,6 @@ import java.util.UUID;
 @ToString
 @Entity
 @Table(name = "cars")
-@NamedEntityGraph(
-        name = "Car.withCategory",
-        attributeNodes = {
-                @NamedAttributeNode("category")
-        }
-)
 public class Car {
 
     @Id

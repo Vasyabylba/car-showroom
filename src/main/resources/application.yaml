@@ -1,0 +1,15 @@
+datasource:
+  driver-class-name: org.postgresql.Driver
+  username: ${POSTGRES_USER:postgres}
+  password: ${POSTGRES_PASSWORD:postgres}
+  url: jdbc:${POSTGRES_CONNECTION:postgresql}://${POSTGRES_HOST:localhost:5432}/${POSTGRES_DB:car_showroom}
+jpa:
+  show-sql: true
+  hibernate:
+    ddl-auto: validate
+  properties:
+    hibernate:
+      format_sql: true
+
+liquibase:
+  change-log: classpath:/db/changelog/db.changelog-master.xml

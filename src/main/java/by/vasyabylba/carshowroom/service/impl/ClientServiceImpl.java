@@ -1,7 +1,7 @@
 package by.vasyabylba.carshowroom.service.impl;
 
-import by.vasyabylba.carshowroom.dto.ClientRequest;
-import by.vasyabylba.carshowroom.dto.ClientResponse;
+import by.vasyabylba.carshowroom.dto.client.ClientRequest;
+import by.vasyabylba.carshowroom.dto.client.ClientResponse;
 import by.vasyabylba.carshowroom.entity.Car;
 import by.vasyabylba.carshowroom.entity.Client;
 import by.vasyabylba.carshowroom.excteption.CarNotFoundException;
@@ -10,72 +10,69 @@ import by.vasyabylba.carshowroom.excteption.ClientNotFoundException;
 import by.vasyabylba.carshowroom.mapper.ClientMapper;
 import by.vasyabylba.carshowroom.repository.CarRepository;
 import by.vasyabylba.carshowroom.repository.ClientRepository;
-import by.vasyabylba.carshowroom.repository.impl.CarRepositoryImpl;
-import by.vasyabylba.carshowroom.repository.impl.ClientRepositoryImpl;
 import by.vasyabylba.carshowroom.service.ClientService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
-
+@Service
+@RequiredArgsConstructor
 public class ClientServiceImpl implements ClientService {
 
-    private static final ClientService INSTANCE = new ClientServiceImpl();
+    private final ClientRepository clientRepository;
 
-    private final ClientRepository clientRepository = ClientRepositoryImpl.getInstance();
+    private final CarRepository carRepository;
 
-    private final CarRepository carRepository = CarRepositoryImpl.getInstance();
-
-    public static ClientService getInstance() {
-        return INSTANCE;
-    }
+    private final ClientMapper clientMapper;
 
     @Override
     public List<ClientResponse> getAll() {
         List<Client> clients = clientRepository.findAll();
         return clients.stream()
-                .map(ClientMapper.INSTANCE::toClientResponse)
+                .map(clientMapper::toClientResponse)
                 .toList();
     }
 
     @Override
-    public ClientResponse getOne(UUID id) {
-        Client client = getClientById(id);
+    public ClientResponse getOne(UUID clientId) {
+        Client client = getClientById(clientId);
 
-        return ClientMapper.INSTANCE.toClientResponse(client);
+        return clientMapper.toClientResponse(client);
     }
 
     @Override
     public ClientResponse create(ClientRequest clientRequest) {
-        Client client = ClientMapper.INSTANCE.toEntity(clientRequest);
+        Client client = clientMapper.toEntity(clientRequest);
 
         Client savedClient = clientRepository.save(client);
 
-        return ClientMapper.INSTANCE.toClientResponse(savedClient);
+        return clientMapper.toClientResponse(savedClient);
     }
 
     @Override
-    public ClientResponse update(UUID id, ClientRequest clientRequest) {
-        Client client = getClientById(id);
+    public ClientResponse update(UUID clientId, ClientRequest clientRequest) {
+        Client client = getClientById(clientId);
 
-        ClientMapper.INSTANCE.updateWithNull(clientRequest, client);
+        clientMapper.updateWithNull(clientRequest, client);
 
-        Client savedClient = clientRepository.update(client);
-        return ClientMapper.INSTANCE.toClientResponse(savedClient);
+        Client savedClient = clientRepository.save(client);
+        return clientMapper.toClientResponse(savedClient);
     }
 
     @Override
-    public void delete(UUID id) {
-        if (id == null) {
+    public void delete(UUID clientId) {
+        if (clientId == null) {
             return;
         }
 
-        clientRepository.deleteById(id);
+        clientRepository.deleteById(clientId);
     }
 
     @Override
     public void buyCar(UUID clientId, UUID carId) {
-        Client client = getClientByIdWithCars(clientId);
+        Client client = getClientWithCarsById(clientId);
         Car car = getCarById(carId);
 
         if (isClientHasCar(client, car)) {
@@ -83,7 +80,7 @@ public class ClientServiceImpl implements ClientService {
         }
 
         client.getCars().add(car);
-        clientRepository.update(client);
+        clientRepository.save(client);
     }
 
     private Client getClientById(UUID id) {
@@ -91,8 +88,8 @@ public class ClientServiceImpl implements ClientService {
                 .orElseThrow(() -> ClientNotFoundException.byClientId(id));
     }
 
-    private Client getClientByIdWithCars(UUID id) {
-        return clientRepository.findByIdWithCars(id)
+    private Client getClientWithCarsById(UUID id) {
+        return clientRepository.findWithCarsById(id)
                 .orElseThrow(() -> ClientNotFoundException.byClientId(id));
     }
 

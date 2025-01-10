@@ -1,91 +1,81 @@
 package by.vasyabylba.carshowroom.service.impl;
 
-import by.vasyabylba.carshowroom.dto.ReviewRequest;
-import by.vasyabylba.carshowroom.dto.ReviewResponse;
+import by.vasyabylba.carshowroom.dto.review.ReviewRequest;
+import by.vasyabylba.carshowroom.dto.review.ReviewResponse;
 import by.vasyabylba.carshowroom.entity.Review;
 import by.vasyabylba.carshowroom.excteption.CarNotFoundException;
 import by.vasyabylba.carshowroom.excteption.ClientNotFoundException;
 import by.vasyabylba.carshowroom.excteption.ReviewNotFoundException;
+import by.vasyabylba.carshowroom.filter.ReviewFilter;
 import by.vasyabylba.carshowroom.mapper.ReviewMapper;
 import by.vasyabylba.carshowroom.repository.CarRepository;
 import by.vasyabylba.carshowroom.repository.ClientRepository;
 import by.vasyabylba.carshowroom.repository.ReviewRepository;
-import by.vasyabylba.carshowroom.repository.impl.CarRepositoryImpl;
-import by.vasyabylba.carshowroom.repository.impl.ClientRepositoryImpl;
-import by.vasyabylba.carshowroom.repository.impl.ReviewRepositoryImpl;
 import by.vasyabylba.carshowroom.service.ReviewService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
-
+@Service
+@RequiredArgsConstructor
 public class ReviewServiceImpl implements ReviewService {
 
-    private static final ReviewService INSTANCE = new ReviewServiceImpl();
+    private final CarRepository carRepository;
 
-    private final CarRepository carRepository = CarRepositoryImpl.getInstance();
+    private final ClientRepository clientRepository;
 
-    private final ClientRepository clientRepository = ClientRepositoryImpl.getInstance();
+    private final ReviewRepository reviewRepository;
 
-
-    private final ReviewRepository reviewRepository = ReviewRepositoryImpl.getInstance();
-
-    public static ReviewService getInstance() {
-        return INSTANCE;
-    }
+    private final ReviewMapper reviewMapper;
 
     @Override
-    public List<ReviewResponse> getAll() {
-        List<Review> reviews = reviewRepository.findAll();
+    public List<ReviewResponse> getAll(ReviewFilter reviewFilter) {
+        Specification<Review> reviewSpecification = reviewFilter.toSpecification();
+        List<Review> reviews = reviewRepository.findAll(reviewSpecification);
         return reviews.stream()
-                .map(ReviewMapper.INSTANCE::toReviewResponse)
+                .map(reviewMapper::toReviewResponse)
                 .toList();
     }
 
     @Override
-    public ReviewResponse getOne(UUID id) {
-        Review review = getReviewById(id);
+    public ReviewResponse getOne(UUID reviewId) {
+        Review review = getReviewById(reviewId);
 
-        return ReviewMapper.INSTANCE.toReviewResponse(review);
+        return reviewMapper.toReviewResponse(review);
     }
 
     @Override
     public ReviewResponse create(ReviewRequest reviewRequest) {
         checkAssociations(reviewRequest);
 
-        Review review = ReviewMapper.INSTANCE.toEntity(reviewRequest);
+        Review review = reviewMapper.toEntity(reviewRequest);
 
         Review savedReview = reviewRepository.save(review);
 
-        return ReviewMapper.INSTANCE.toReviewResponse(savedReview);
+        return reviewMapper.toReviewResponse(savedReview);
     }
 
     @Override
-    public ReviewResponse update(UUID id, ReviewRequest reviewRequest) {
-        Review review = getReviewById(id);
+    public ReviewResponse update(UUID reviewId, ReviewRequest reviewRequest) {
+        Review review = getReviewById(reviewId);
         checkAssociations(reviewRequest);
 
-        ReviewMapper.INSTANCE.updateWithNull(reviewRequest, review);
+        reviewMapper.updateWithNull(reviewRequest, review);
 
-        Review savedReview = reviewRepository.update(review);
-        return ReviewMapper.INSTANCE.toReviewResponse(savedReview);
+        Review savedReview = reviewRepository.save(review);
+        return reviewMapper.toReviewResponse(savedReview);
     }
 
     @Override
-    public void delete(UUID id) {
-        if (id == null) {
+    public void delete(UUID reviewId) {
+        if (reviewId == null) {
             return;
         }
 
-        reviewRepository.deleteById(id);
-    }
-
-    @Override
-    public List<ReviewResponse> searchReviews(String content) {
-        List<Review> reviews = reviewRepository.findByContent(content);
-        return reviews.stream()
-                .map(ReviewMapper.INSTANCE::toReviewResponse)
-                .toList();
+        reviewRepository.deleteById(reviewId);
     }
 
     private void checkAssociations(ReviewRequest reviewRequest) {

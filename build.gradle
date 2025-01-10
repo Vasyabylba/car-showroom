@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'io.freefair.lombok' version "8.11"
+    id 'war'
 }
 
 group = 'by.vasyabylba'
@@ -12,23 +13,51 @@ java {
     }
 }
 
+war {
+    archiveFileName.set("car-showroom.war")
+}
+
 repositories {
     mavenCentral()
 }
 
 ext {
     mapstructVersion = '1.6.3'
+    hibernateValidatorVersion = '8.0.2.Final'
+    jakartaValidationApiVersion = "3.1.0"
+    slf4jApiVersion = "2.0.16"
+    logbackClassicVersion = "1.5.15"
 }
 
 dependencies {
+    implementation 'org.springframework:spring-context:6.2.1'
+    implementation 'org.springframework:spring-webmvc:6.2.1'
+    implementation 'org.springframework.data:spring-data-jpa:3.4.1'
+
+    implementation 'org.yaml:snakeyaml:2.3'
+
+    compileOnly 'jakarta.servlet:jakarta.servlet-api:6.1.0'
 
     implementation 'org.hibernate.orm:hibernate-core:6.6.4.Final'
 
     implementation 'org.postgresql:postgresql:42.7.4'
+    implementation 'org.liquibase:liquibase-core:4.30.0'
 
     implementation "org.mapstruct:mapstruct:${mapstructVersion}"
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
 
+    implementation "org.hibernate.validator:hibernate-validator:${hibernateValidatorVersion}"
+    implementation "jakarta.validation:jakarta.validation-api:${jakartaValidationApiVersion}"
+    implementation "org.hibernate:hibernate-validator-annotation-processor:${hibernateValidatorVersion}"
+
+    implementation platform('com.fasterxml.jackson:jackson-bom:2.18.1')
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.core:jackson-core'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+    implementation "org.slf4j:slf4j-api:${slf4jApiVersion}"
+    implementation "ch.qos.logback:logback-classic:${logbackClassicVersion}"
 
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
