@@ -1,19 +1,17 @@
 package by.vasyabylba.carshowroom.mapper;
 
-import by.vasyabylba.carshowroom.dto.CarShowroomRequest;
-import by.vasyabylba.carshowroom.dto.CarShowroomResponse;
+import by.vasyabylba.carshowroom.dto.carshowroom.CarShowroomRequest;
+import by.vasyabylba.carshowroom.dto.carshowroom.CarShowroomResponse;
 import by.vasyabylba.carshowroom.entity.CarShowroom;
 import org.mapstruct.InheritConfiguration;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
-import org.mapstruct.factory.Mappers;
 
-@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = MappingConstants.ComponentModel.SPRING)
 public interface CarShowroomMapper {
-
-    CarShowroomMapper INSTANCE = Mappers.getMapper(CarShowroomMapper.class);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "cars", ignore = true)
