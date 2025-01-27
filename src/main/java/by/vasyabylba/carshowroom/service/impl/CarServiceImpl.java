@@ -1,145 +1,91 @@
 package by.vasyabylba.carshowroom.service.impl;
 
-import by.vasyabylba.carshowroom.dto.CarRequest;
-import by.vasyabylba.carshowroom.dto.CarResponse;
+import by.vasyabylba.carshowroom.dto.car.CarRequest;
+import by.vasyabylba.carshowroom.dto.car.CarResponse;
 import by.vasyabylba.carshowroom.entity.Car;
 import by.vasyabylba.carshowroom.entity.CarShowroom;
-import by.vasyabylba.carshowroom.enums.SortDirection;
 import by.vasyabylba.carshowroom.excteption.CarAlreadyInShowroomException;
 import by.vasyabylba.carshowroom.excteption.CarNotFoundException;
 import by.vasyabylba.carshowroom.excteption.CarShowroomNotFoundException;
 import by.vasyabylba.carshowroom.excteption.CategoryNotFoundException;
 import by.vasyabylba.carshowroom.filter.CarFilter;
+import by.vasyabylba.carshowroom.logging.Logging;
 import by.vasyabylba.carshowroom.mapper.CarMapper;
 import by.vasyabylba.carshowroom.repository.CarRepository;
 import by.vasyabylba.carshowroom.repository.CarShowroomRepository;
 import by.vasyabylba.carshowroom.repository.CategoryRepository;
-import by.vasyabylba.carshowroom.repository.impl.CarRepositoryImpl;
-import by.vasyabylba.carshowroom.repository.impl.CarShowroomRepositoryImpl;
-import by.vasyabylba.carshowroom.repository.impl.CategoryRepositoryImpl;
 import by.vasyabylba.carshowroom.service.CarService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Window;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
+@Logging
+@Service
+@RequiredArgsConstructor
 public class CarServiceImpl implements CarService {
 
-    private static final CarService INSTANCE = new CarServiceImpl();
+    private final CarRepository carRepository;
 
-    private final CarRepository carRepository = CarRepositoryImpl.getInstance();
+    private final CategoryRepository categoryRepository;
 
-    private final CategoryRepository categoryRepository = CategoryRepositoryImpl.getInstance();
+    private final CarShowroomRepository carShowroomRepository;
 
-    private final CarShowroomRepository carShowroomRepository = CarShowroomRepositoryImpl.getInstance();
+    private final CarMapper carMapper;
 
-    public static CarService getInstance() {
-        return INSTANCE;
+    @Override
+    public Window<CarResponse> getAll(CarFilter carFilter, Pageable pageable) {
+        Specification<Car> carSpecification = carFilter.toSpecification();
+        Window<Car> cars = carRepository.findBy(
+                carSpecification, fluentQuery -> fluentQuery
+                        .sortBy(pageable.getSort())
+                        .limit(pageable.getPageSize())
+                        .scroll(pageable.toScrollPosition())
+        );
+
+        return cars.map(carMapper::toCarResponse);
     }
 
     @Override
-    public List<CarResponse> getAll() {
-        List<Car> cars = carRepository.findAll();
-        return cars.stream()
-                .map(CarMapper.INSTANCE::toCarResponse)
-                .toList();
-    }
+    public CarResponse getOne(UUID carId) {
+        Car car = getCarById(carId);
 
-    @Override
-    public List<CarResponse> getAll(SortDirection sortDirection) {
-        List<Car> cars = carRepository.findAll(sortDirection);
-        return cars.stream()
-                .map(CarMapper.INSTANCE::toCarResponse)
-                .toList();
-    }
-
-    @Override
-    public List<CarResponse> getAll(int pageNumber, int pageSize) {
-        List<Car> cars = carRepository.findAll(pageNumber, pageSize);
-        return cars.stream()
-                .map(CarMapper.INSTANCE::toCarResponse)
-                .toList();
-    }
-
-    @Override
-    public List<CarResponse> getAll(SortDirection sortDirection, int pageNumber, int pageSize) {
-        List<Car> cars = carRepository.findAll(sortDirection, pageNumber, pageSize);
-        return cars.stream()
-                .map(CarMapper.INSTANCE::toCarResponse)
-                .toList();
-    }
-
-    @Override
-    public List<CarResponse> getAll(CarFilter carFilter) {
-        List<Car> cars = carRepository.findAll(carFilter);
-        return cars.stream()
-                .map(CarMapper.INSTANCE::toCarResponse)
-                .toList();
-    }
-
-    @Override
-    public List<CarResponse> getAll(CarFilter carFilter, SortDirection sortDirection) {
-        List<Car> cars = carRepository.findAll(carFilter, sortDirection);
-        return cars.stream()
-                .map(CarMapper.INSTANCE::toCarResponse)
-                .toList();
-    }
-
-    @Override
-    public List<CarResponse> getAll(CarFilter carFilter, int pageNumber, int pageSize) {
-        List<Car> cars = carRepository.findAll(carFilter, pageNumber, pageSize);
-        return cars.stream()
-                .map(CarMapper.INSTANCE::toCarResponse)
-                .toList();
-    }
-
-    @Override
-    public List<CarResponse> getAll(CarFilter carFilter,
-                                    SortDirection sortDirection,
-                                    int pageNumber,
-                                    int pageSize) {
-        List<Car> cars = carRepository.findAll(carFilter, sortDirection, pageNumber, pageSize);
-        return cars.stream()
-                .map(CarMapper.INSTANCE::toCarResponse)
-                .toList();
-    }
-
-
-    @Override
-    public CarResponse getOne(UUID id) {
-        Car car = getCarById(id);
-
-        return CarMapper.INSTANCE.toCarResponse(car);
+        return carMapper.toCarResponse(car);
     }
 
     @Override
     public CarResponse create(CarRequest carRequest) {
         checkAssociations(carRequest);
 
-        Car car = CarMapper.INSTANCE.toEntity(carRequest);
+        Car car = carMapper.toEntity(carRequest);
 
         Car savedCar = carRepository.save(car);
 
-        return CarMapper.INSTANCE.toCarResponse(savedCar);
+        return carMapper.toCarResponse(savedCar);
     }
 
     @Override
-    public CarResponse update(UUID id, CarRequest carRequest) {
-        Car car = getCarById(id);
+    public CarResponse update(UUID carId, CarRequest carRequest) {
+        Car car = getCarById(carId);
         checkAssociations(carRequest);
 
-        CarMapper.INSTANCE.updateWithNull(carRequest, car);
+        carMapper.updateWithNull(carRequest, car);
 
-        Car savedCar = carRepository.update(car);
-        return CarMapper.INSTANCE.toCarResponse(savedCar);
+        Car savedCar = carRepository.save(car);
+        return carMapper.toCarResponse(savedCar);
     }
 
     @Override
-    public void delete(UUID id) {
-        if (id == null) {
+    public void delete(UUID carId) {
+        if (carId == null) {
             return;
         }
 
-        carRepository.deleteById(id);
+        carRepository.deleteById(carId);
     }
 
     @Override
@@ -152,34 +98,7 @@ public class CarServiceImpl implements CarService {
         }
 
         car.setShowroom(carShowroom);
-        carRepository.update(car);
-    }
-
-    @Override
-    public List<CarResponse> findByShowroomUsingEntityGraph(UUID showroomId) {
-        CarShowroom showroom = getCarShowroomById(showroomId);
-
-        return carRepository.findByShowroomUsingEntityGraph(showroom).stream()
-                .map(CarMapper.INSTANCE::toCarResponse)
-                .toList();
-    }
-
-    @Override
-    public List<CarResponse> findByShowroomUsingJpqlFetch(UUID showroomId) {
-        CarShowroom showroom = getCarShowroomById(showroomId);
-
-        return carRepository.findByShowroomUsingJpqlFetch(showroom).stream()
-                .map(CarMapper.INSTANCE::toCarResponse)
-                .toList();
-    }
-
-    @Override
-    public List<CarResponse> findByShowroomUsingCriteriaFetch(UUID showroomId) {
-        CarShowroom showroom = getCarShowroomById(showroomId);
-
-        return carRepository.findByShowroomUsingCriteriaFetch(showroom).stream()
-                .map(CarMapper.INSTANCE::toCarResponse)
-                .toList();
+        carRepository.save(car);
     }
 
     private void checkAssociations(CarRequest carRequest) {

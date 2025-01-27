@@ -1,68 +1,68 @@
 package by.vasyabylba.carshowroom.service.impl;
 
-import by.vasyabylba.carshowroom.dto.CategoryRequest;
-import by.vasyabylba.carshowroom.dto.CategoryResponse;
+import by.vasyabylba.carshowroom.dto.category.CategoryRequest;
+import by.vasyabylba.carshowroom.dto.category.CategoryResponse;
 import by.vasyabylba.carshowroom.entity.Category;
 import by.vasyabylba.carshowroom.excteption.CategoryNotFoundException;
 import by.vasyabylba.carshowroom.mapper.CategoryMapper;
 import by.vasyabylba.carshowroom.repository.CategoryRepository;
-import by.vasyabylba.carshowroom.repository.impl.CategoryRepositoryImpl;
 import by.vasyabylba.carshowroom.service.CategoryService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
+@Service
+@RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
-    private static final CategoryService INSTANCE = new CategoryServiceImpl();
 
-    private final CategoryRepository categoryRepository = CategoryRepositoryImpl.getInstance();
+    private final CategoryRepository categoryRepository;
 
-    public static CategoryService getInstance() {
-        return INSTANCE;
-    }
+    private final CategoryMapper categoryMapper;
 
     @Override
     public List<CategoryResponse> getAll() {
         List<Category> categories = categoryRepository.findAll();
         return categories.stream()
-                .map(CategoryMapper.INSTANCE::toCategoryResponse)
+                .map(categoryMapper::toCategoryResponse)
                 .toList();
     }
 
     @Override
-    public CategoryResponse getOne(UUID id) {
-        Category category = getCategoryById(id);
+    public CategoryResponse getOne(UUID categoryId) {
+        Category category = getCategoryById(categoryId);
 
-        return CategoryMapper.INSTANCE.toCategoryResponse(category);
+        return categoryMapper.toCategoryResponse(category);
     }
 
     @Override
     public CategoryResponse create(CategoryRequest categoryRequest) {
-        Category category = CategoryMapper.INSTANCE.toEntity(categoryRequest);
+        Category category = categoryMapper.toEntity(categoryRequest);
 
         Category savedCategory = categoryRepository.save(category);
 
-        return CategoryMapper.INSTANCE.toCategoryResponse(savedCategory);
+        return categoryMapper.toCategoryResponse(savedCategory);
     }
 
     @Override
-    public CategoryResponse update(UUID id, CategoryRequest categoryRequest) {
-        Category category = getCategoryById(id);
+    public CategoryResponse update(UUID categoryId, CategoryRequest categoryRequest) {
+        Category category = getCategoryById(categoryId);
 
-        CategoryMapper.INSTANCE.updateWithNull(categoryRequest, category);
+        categoryMapper.updateWithNull(categoryRequest, category);
 
-        Category savedCategory = categoryRepository.update(category);
-        return CategoryMapper.INSTANCE.toCategoryResponse(savedCategory);
+        Category savedCategory = categoryRepository.save(category);
+        return categoryMapper.toCategoryResponse(savedCategory);
     }
 
     @Override
-    public void delete(UUID id) {
-        if (id == null) {
+    public void delete(UUID categoryId) {
+        if (categoryId == null) {
             return;
         }
 
-        categoryRepository.deleteById(id);
+        categoryRepository.deleteById(categoryId);
     }
 
     private Category getCategoryById(UUID id) {
